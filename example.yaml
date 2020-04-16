@@ -1,0 +1,2514 @@
+swagger: '2.0'
+info:
+  title: Leroy Merlin API Documentation
+  description: This documentation lists all available API endpoints and how to interact with them.
+  version: 2.0.0
+host: www.leroymerlin.com.br
+basePath: /api/v2
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /:
+    get:
+      tags:
+        - API
+      summary: Health Check
+      description: Verifies if the API is in a healthy state and provides an URL for the `JSON documentation`.
+      responses:
+        200:
+          description: API is healthy
+          schema:
+            properties:
+              name:
+                description: API name
+                type: string
+              message:
+                description: Health Check descriptive status
+                type: string
+              documentation:
+                description: Documentation URI
+                type: string
+        default:
+          description: unexpected errors
+  /documentation:
+    get:
+      tags:
+        - API
+      summary: Documentation
+      description: Retrieve the swagger documentation that you are currently reading.
+      responses:
+        200:
+          description: Swagger documentation
+        500:
+          description: Under Maintenance
+        default:
+          description: unexpected errors
+  /priceAudit/{productId}/{storeId}:
+    get:
+      tags:
+        - Price Audit
+      summary: Get product prices of all services by product id and store id
+      description: Retrieve prices by product id and store id. The data contains price information, special price and recommend price data, on every services.
+      parameters:
+        - name: productId
+          in: path
+          description: Product Id (e.g 88998899)
+          required: true
+          type: string
+        - name: storeId
+          in: path
+          description: Store Id (e.g 0001)
+          required: true
+          type: string
+      responses:
+        200:
+          description: Services prices data
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServicePrice'
+        207:
+          description: Information about each get price requests in each service, when at least one of those requests has errors.
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServicePriceWithErrors'
+        400:
+          description: Invalid parameter
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/InternalServerError'
+    put:
+      tags:
+        - Price Audit
+      summary: Update product price by id
+      description: Update any product price by id
+      parameters:
+        - name: productId
+          in: path
+          description: Product Id (e.g 88998899)
+          required: true
+          type: string
+        - name: storeId
+          in: path
+          description: Store Id (e.g 0001)
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Product price object that needs to be updated
+          schema:
+            $ref: '#/definitions/ProductPrice'
+      responses:
+        200:
+          description: Services prices data
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServicePriceUpdate'
+        207:
+          description: Information about each get price requests in each service, when at least one of those requests has errors.
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServicePriceWithErrors'
+        400:
+          description: Invalid parameter
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/InternalServerError'
+      security:
+        - oauth2:
+            - write.prices
+  /products/price/{productId}/store/{storeId}:
+    get:
+      tags:
+        - Products
+      summary: Get prices of a product
+      description: Get a product's prices information.
+      parameters:
+        - name: productId
+          in: path
+          description: Product Id (e.g 88998899)
+          required: true
+          type: string
+        - name: storeId
+          in: path
+          description: Store Id (e.g 0001)
+          required: true
+          type: string
+      responses:
+        200:
+          description: Prices data
+          schema:
+            properties:
+              data:
+                type: object
+                description: Product price data
+                $ref: '#/definitions/ProductPrice'
+        400:
+          description: Invalid parameter
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        404:
+          description: Product or Store Not Found
+          schema:
+            $ref: '#/definitions/NotFoundError'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/InternalServerError'
+    put:
+      tags:
+        - Products
+      summary: Update prices of a product
+      description: Update a product's prices information.
+      parameters:
+        - name: productId
+          in: path
+          description: Product Id (e.g 88998899)
+          required: true
+          type: string
+        - name: storeId
+          in: path
+          description: Store Id (e.g 0001)
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Product price object that needs to be updated
+          schema:
+            $ref: '#/definitions/ProductPrice'
+      responses:
+        200:
+          description: Prices are updated with success
+          schema:
+            properties:
+              message:
+                type: string
+                description: Insight about operation.
+                example: Success.
+        400:
+          description: Invalid parameter
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/FailureRequest'
+        404:
+          description: Product or Store Not Found
+          schema:
+            $ref: '#/definitions/NotFoundError'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/InternalServerError'
+      security:
+        - oauth2:
+            - write.prices
+  /user/{credential}/carts:
+    get:
+      tags:
+        - Users
+      summary: Get user carts by CPF or E-mail
+      description: 'Retrieve user carts by his CPF or E-mail. The data contains basic cart information, products, prices, quantity and creation date.'
+      parameters:
+        - name: credential
+          in: path
+          description: User CPF or E-mail (e.g 11122233344 or john.doe@example.com)
+          required: true
+          type: string
+        - name: status
+          in: query
+          description: Carts status
+          required: true
+          type: string
+          default: abandoned
+          enum:
+            - active
+            - bought
+            - abandoned
+            - archived
+        - name: limit
+          in: query
+          description: Maximum number of results to return
+          required: false
+          type: number
+          default: 40
+        - name: offset
+          in: query
+          description: The offset of the first result to return
+          required: false
+          type: number
+          default: 0
+      responses:
+        200:
+          description: User carts data
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/Cart'
+              metadata:
+                $ref: '#/definitions/Limit'
+        400:
+          description: Invalid parameter
+        404:
+          description: User or Carts Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.carts
+  /contents/images:
+    get:
+      tags:
+        - Content
+      summary: Get Image Contents
+      description: Retrieve image content list.
+      parameters:
+        - name: page
+          in: query
+          description: The desired result page
+          required: false
+          type: number
+          default: 1
+        - name: perPage
+          in: query
+          description: How many results on each page
+          required: false
+          type: number
+          default: 40
+        - name: sinceDate
+          in: query
+          description: 'Since date of content has updated in RFC3339 format. Ex: 2017-08-27T04:04:36-03:00'
+          required: false
+          type: string
+          format: date-time
+      responses:
+        200:
+          description: Image Content data
+          schema:
+            properties:
+              data:
+                description: Wrapped Image Content object
+                type: array
+                items:
+                  $ref: '#/definitions/ImageContent'
+              metadata:
+                $ref: '#/definitions/Pagination'
+        404:
+          description: Image Content Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.contents
+  /contents/images/{id}:
+    get:
+      tags:
+        - Content
+      summary: Get A Image Content By Id
+      description: Retrieve image content.
+      parameters:
+        - name: id
+          in: path
+          description: Image ID (e.g 58a20df40374210ef97e7701)
+          required: true
+          type: string
+      responses:
+        200:
+          description: Image Content data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/ImageContent'
+        404:
+          description: Image Content Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.contents
+  /products/prices/{lm}/regions:
+    get:
+      tags:
+        - Products
+      summary: Get prices of a product
+      description: Get a product's prices information.
+      parameters:
+        - name: lm
+          in: path
+          description: The product LM.
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Return the prices for each region for a product (see examples)
+          schema:
+            properties:
+              data:
+                description: Wrapped prices of a product by regions object
+                type: array
+                items:
+                  $ref: '#/definitions/Price'
+        404:
+          description: A Not Found exception will be thrown when the product wasn`t found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.prices
+  /products/prices/{lm}/regions/{region}:
+    get:
+      tags:
+        - Products
+      summary: Get prices of a product for a specific region
+      description: Get a product's prices information for a specific region.
+      parameters:
+        - name: lm
+          in: path
+          description: The product LM.
+          required: true
+          type: integer
+        - name: region
+          in: path
+          description: The region to be filtered
+          required: true
+          type: string
+          enum:
+            - alagoas
+            - baixada_santista
+            - belo_horizonte
+            - brasilia
+            - campinas
+            - ceara
+            - curitiba
+            - espirito_santo
+            - goiania
+            - grande_porto_alegre
+            - grande_sao_paulo
+            - londrina
+            - mato_grosso_do_sul
+            - outros
+            - rib_preto
+            - rio_de_janeiro
+            - rio_grande_do_norte
+            - santa_catarina
+            - sao_jose_do_rio_preto
+            - sorocaba
+            - uberlandia
+            - vale_do_paraiba
+
+      responses:
+        200:
+          description: Returns the prices for specific region (see example)
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/Price'
+        404:
+          description: A Not Found exception will be thrown when the product or the region weren`t found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.prices
+  /productBanks:
+    get:
+      tags:
+        - Product Banks
+      summary: Get Product Banks
+      description: Retrieve product bank list.
+      parameters:
+        - name: offset
+          in: query
+          description: The offset of the first result to return
+          required: false
+          type: number
+          default: 0
+          minimum: 0
+        - name: limit
+          in: query
+          description: Maximum number of results to return
+          required: false
+          type: number
+          default: 40
+          maximum: 100
+          minimum: 0
+        - name: updatedAfter
+          in: query
+          description: 'Filter Product Banks that were updated after the given date. The date is expected to be in RFC3339 format. Ex: 2017-08-27T04:04:36-03:00'
+          required: false
+          type: string
+          format: date-time
+      responses:
+        200:
+          description: Product Banks data
+          schema:
+            properties:
+              data:
+                description: Wrapped Product Banks objects
+                type: array
+                items:
+                  $ref: '#/definitions/ProductBankList'
+              metadata:
+                $ref: '#/definitions/Limit'
+        422:
+          description: Human-readable validation errors
+          schema:
+            $ref: '#/definitions/ValidationErrors'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.productBanks
+  /productBanks/{id}:
+    get:
+      tags:
+        - Product Banks
+      summary: Get a Product Bank by id
+      description: 'Show Product Bank information, creation rules and recommendations'
+      parameters:
+        - name: id
+          in: path
+          description: Product bank id
+          required: true
+          type: string
+      responses:
+        200:
+          description: 'Returns the rules for a given product bank, each rule type has its own fields (see examples)'
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/ProductBank'
+          examples:
+            data:
+              id: 5232342345rffad1352323r4235
+              name: Conjuntos e Kits
+              description: 'São acessórios extras compostos de multijatos, alças de apoio e encostos de cabeça'
+              productShortNamePattern: Produto + Potência + Tensão Elétrica + Marca
+              productLongNamePattern: Produto + Tensão Elétrica + Marca
+              recommendedPicturesQuantity: 5
+              picture: null
+              isDataSheetConfigured: false
+              createdAt: '2018-08-07T18:16:45-03:00'
+              updatedAt: '2018-08-27T04:04:36-03:00'
+              attributes:
+                - type: option
+                  groupName: Acompanha Embalagem
+                  name: Tipo de Embalagem
+                  fieldName: tipo_de_embalagem
+                  values:
+                    - Cartela
+                    - Saco
+                    - Bisnaga
+                    - Galão
+                  description: null
+                  prefix: null
+                  suffix: null
+                  required: true
+                  dataSheet: true
+                  hidden: false
+                - type: regex
+                  groupName: Acompanha Válvula de Escoamento
+                  name: Diâmetro da Válvula
+                  fieldName: diametro_da_valvula
+                  regexDescription: 'Formatos aceitos: 1/4;1.1/4 ou 1'
+                  regexExpression: ^\d+(\.\d+)?(\/\d+)?$
+                  description: null
+                  prefix: null
+                  suffix: '"'
+                  required: false
+                  dataSheet: false
+                  hidden: false
+                - type: string
+                  groupName: Compatível com as Marcas
+                  name: Compatível com as Marcas
+                  fieldName: compativel_com_as_marcas
+                  description: null
+                  prefix: null
+                  suffix: null
+                  required: false
+                  dataSheet: false
+                  hidden: false
+                - type: float
+                  groupName: Acompanha Embalagem
+                  name: Peso do Produto na Embalagem
+                  fieldName: peso_do_produto_na_embalagem
+                  interval: null
+                  description: null
+                  prefix: null
+                  suffix: mg
+                  required: true
+                  dataSheet: false
+                  hidden: false
+                - type: integer
+                  groupName: Garantia do Fabricante
+                  name: Garantia do Fabricante
+                  fieldName: garantia_do_frabricante
+                  interval: '5'
+                  description: null
+                  prefix: null
+                  suffix: mes(es)
+                  required: false
+                  dataSheet: false
+                  hidden: true
+        404:
+          description: Product Bank Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.productBanks
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Get Products
+      description: Retrieve a list of products.
+      parameters:
+        - name: offset
+          in: query
+          description: The offset of the first result to return
+          required: false
+          type: integer
+          default: 0
+          minimum: 0
+        - name: limit
+          in: query
+          description: Maximum number of results to return
+          required: false
+          type: integer
+          default: 40
+          maximum: 100
+          minimum: 0
+      responses:
+        200:
+          description: Products data
+          schema:
+            properties:
+              data:
+                description: Wrapped Products objects
+                type: array
+                items:
+                  $ref: '#/definitions/Product'
+              metadata:
+                $ref: '#/definitions/Limit'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.products
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: Store new product.
+      parameters:
+        - name: body
+          in: body
+          description: Product object that will be created
+          schema:
+            $ref: '#/definitions/NewProductRequest'
+      responses:
+        201:
+          description: Product data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/NewProduct'
+        409:
+          description: Conflict on Product creation
+          schema:
+            $ref: '#/definitions/ProductEanConflict'
+        422:
+          description: Human-readable validation errors
+          schema:
+            $ref: '#/definitions/ValidationErrors'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - write.products
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get a product by LM
+      description: Retrieve information about the product.
+      parameters:
+        - name: id
+          in: path
+          description: Product LM (e.g. 88887777)
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Product data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/Product'
+        404:
+          description: Product Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.products
+    patch:
+      tags:
+        - Products
+      summary: Update a product
+      description: Update the given product
+      parameters:
+        - name: id
+          in: path
+          description: Product ID (e.g. 1512312312)
+          required: true
+          type: integer
+        - name: body
+          in: body
+          description: Product data that will be updated
+          schema:
+            $ref: '#/definitions/NewProductRequest'
+      responses:
+        200:
+          description: Product data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/NewProduct'
+        422:
+          description: Human-readable validation errors
+          schema:
+            $ref: '#/definitions/ValidationErrors'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - write.products
+  /products/ean/{ean}:
+    get:
+      tags:
+        - Products
+      summary: Get a product by EAN or EAN's
+      description: Retrieve information about the product.
+      parameters:
+        - name: ean
+          in: path
+          description: Product EAN or list of EAN's separated by comma (e.g. 7896525091042 or 7896525091042,7896525091043)
+          required: true
+          type: string
+          maxLength: 15
+          minLength: 13
+      responses:
+        200:
+          description: Product data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/Product'
+        404:
+          description: Product Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.products
+  /user/profile:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: 'Retrieve an user profile. The profile contains basic user information, phones, addresses and preferences.'
+      responses:
+        200:
+          description: User profile data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/User'
+        404:
+          description: User Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.profile
+  /user/{credential}:
+    get:
+      tags:
+        - Users
+      summary: Get user profile by CPF or E-mail
+      description: 'Retrieve an user profile by his CPF or E-mail. The profile contains basic user information, phones, addresses and preferences.'
+      parameters:
+        - name: credential
+          in: path
+          description: User CPF or E-mail (e.g 11122233344 or john.doe@example.com)
+          required: true
+          type: string
+      responses:
+        200:
+          description: User profile data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/User'
+        404:
+          description: User Not Found
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - read.users
+    put:
+      tags:
+        - Users
+      summary: Update user by ID
+      description: Update an user by ID
+      parameters:
+        - name: credential
+          in: path
+          description: User ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: User object that needs to be updated
+          schema:
+            required:
+              - name
+            properties:
+              name:
+                description: User full name
+                type: string
+                example: John Doe
+              birthDate:
+                description: User birth date in RFC3339 full date format
+                type: string
+                example: '1989-05-20'
+              occupation:
+                description: User occupation
+                type: string
+                enum:
+                  - engineer
+                  - architect
+                  - decorator
+                  - mason
+                  - joiner
+                  - electrician
+                  - ceramist
+                  - plumber
+                  - gardener
+                  - painter
+                  - blacksmith
+                  - landscaper
+                  - constructor
+                  - other
+
+                example: engineer
+              gender:
+                description: User gender
+                type: string
+                enum:
+                  - female
+                  - male
+
+                example: male
+              phones:
+                description: User phone numbers
+                type: array
+                items:
+                  properties:
+                    type:
+                      description: Phone type
+                      type: string
+                      enum:
+                        - cellphone
+                        - landline
+
+                    number:
+                      description: Unformatted phone number
+                      type: string
+                      example: '11965840152'
+                    default:
+                      description: Whether the number is the preferred contact phone
+                      type: boolean
+                      example: true
+                  type: object
+              addresses:
+                description: User addresses
+                type: array
+                items:
+                  $ref: '#/definitions/UserAddress'
+              notifications:
+                $ref: '#/definitions/UserNotifications'
+              preferences:
+                description: User preferences
+                type: object
+                properties:
+                  loyaltyProgram:
+                    description: Whether the user has accepted joining the loyalty program
+                    type: boolean
+                  hasInterestInLoyaltyProgram:
+                    description: Whether the user has shown interest in joining the loyalty program
+                    type: boolean
+                  favoriteStore:
+                    description: The user's favorite store
+                    type: string
+                    enum:
+                      - raposo_tav
+                      - interlagos
+                      - s_caetano
+                      - morumbi
+                      - rjafet
+                      - centernort
+                      - s_bernardo_campo
+                      - tiete_sap
+                      - jaguare
+                      - tambore
+                      - analia_franco
+                      - rio_norte
+                      - rio_barra
+                      - bangu
+                      - niteroi
+                      - jacarepagu
+                      - campinas
+                      - anhanguera
+                      - s_leopoldo
+                      - poa
+                      - rib_preto
+                      - sorocaba
+                      - curitiba
+                      - curitibatu
+                      - uberlandia
+                      - brasilia
+                      - brasilia_n
+                      - taguatinga
+                      - sjcampos
+                      - taubate
+                      - sj_r_preto
+                      - goiania
+                      - bh_norte
+                      - bh_sul
+                      - contagem
+                      - londrina
+                      - sj_floripa
+                      - fortaleza
+                      - campo_grande
+                      - maceio
+                      - natal
+                      - vitoria
+                      - santos
+                      - ecommerce
+
+                    example: 's_bernardo_campo'
+              interests:
+                description: User interests
+                type: object
+                properties:
+                  hasChildIndicator:
+                    description: Either if the user has or not children
+                    type: boolean
+                    example: false
+                  homeDecorKnowledgeLevel:
+                    description: Indicates each level of knowledge in decoration
+                    type: string
+                    enum: [high, low, none]
+                    example: low
+                  DIYRelationType:
+                    description: Indicates each level of relation with DIY
+                    type: string
+                    enum: [high, medium, low]
+                    example: medium
+                  interestAreaName:
+                    description: Indicates which areas of interest the user has
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                      - bathroom
+                      - kitchen
+                      - floor
+                      - organization
+                      - garden
+                      - decoration
+                      - carpet
+                      - lighting
+                      - ironmongery
+                      - construction
+                      - electrical
+                      - ventilation
+                      - tools
+                      - hydraulic
+                      - wood
+                      - door
+                      - paints
+                      - security
+                      - maintenance
+
+                    example: [maintenance, security]
+      responses:
+        200:
+          description: Successful response.
+          schema:
+            properties:
+              data:
+                type: array
+                items:
+                  properties:
+                    message:
+                      description: Human readable status message.
+                      type: string
+                      example: The user was updated successfully.
+        404:
+          description: User not found
+        422:
+          description: Human-readable validation errors
+          schema:
+            $ref: '#/definitions/ValidationErrors'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - store.users
+  /user:
+    post:
+      tags:
+        - Users
+      summary: Create user
+      description: Add a new user
+      parameters:
+        - name: body
+          in: body
+          description: User object that needs to be created
+          schema:
+            required:
+              - name
+              - email
+              - fiscalId
+            properties:
+              name:
+                description: User full name
+                type: string
+                example: John Doe
+              email:
+                description: User email address
+                type: string
+                example: john@example.com
+              fiscalId:
+                description: User fiscal ID - CPF or CNPJ
+                type: string
+                example: '48505796802'
+              birthDate:
+                description: User birth date in RFC3339 full date format
+                type: string
+                example: '1989-05-20'
+              occupation:
+                description: User occupation
+                type: string
+                enum:
+                  - engineer
+                  - architect
+                  - decorator
+                  - mason
+                  - joiner
+                  - electrician
+                  - ceramist
+                  - plumber
+                  - gardener
+                  - painter
+                  - blacksmith
+                  - landscaper
+                  - constructor
+                  - other
+
+                example: engineer
+              gender:
+                description: User gender
+                type: string
+                enum:
+                  - female
+                  - male
+
+                example: male
+              phones:
+                description: User phone numbers
+                type: array
+                items:
+                  properties:
+                    type:
+                      description: Phone type
+                      type: string
+                      enum:
+                        - cellphone
+                        - landline
+
+                    number:
+                      description: Unformatted phone number
+                      type: string
+                      example: '11965840152'
+                    default:
+                      description: Whether the number is the preferred contact phone
+                      type: boolean
+                      example: true
+                  type: object
+              addresses:
+                description: User addresses
+                type: array
+                items:
+                  $ref: '#/definitions/UserAddress'
+              notifications:
+                $ref: '#/definitions/UserNotifications'
+              preferences:
+                description: User preferences
+                type: array
+                items:
+                  properties:
+                    loyaltyProgram:
+                      description: Whether the user has accepted joining the loyalty program
+                      type: boolean
+                    loyaltyProgramCode:
+                      description: The code representing the User status in loyalty program, returns null if user is not enrolled
+                      type: integer
+                    hasInterestInLoyaltyProgram:
+                      description: Whether the user has shown interest in joining the loyalty program
+                      type: boolean
+                    favoriteStore:
+                      description: The user's favorite store
+                      type: string
+                      enum:
+                      - raposo_tav
+                      - interlagos
+                      - s_caetano
+                      - morumbi
+                      - rjafet
+                      - centernort
+                      - s_bernardo_campo
+                      - tiete_sap
+                      - jaguare
+                      - tambore
+                      - analia_franco
+                      - rio_norte
+                      - rio_barra
+                      - bangu
+                      - niteroi
+                      - jacarepagu
+                      - campinas
+                      - anhanguera
+                      - s_leopoldo
+                      - poa
+                      - rib_preto
+                      - sorocaba
+                      - curitiba
+                      - curitibatu
+                      - uberlandia
+                      - brasilia
+                      - brasilia_n
+                      - taguatinga
+                      - sjcampos
+                      - taubate
+                      - sj_r_preto
+                      - goiania
+                      - bh_norte
+                      - bh_sul
+                      - contagem
+                      - londrina
+                      - sj_floripa
+                      - fortaleza
+                      - campo_grande
+                      - maceio
+                      - natal
+                      - vitoria
+                      - santos
+                      - ecommerce
+
+                      example: 's_bernardo_campo'
+      responses:
+        201:
+          description: User profile data
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/User'
+        422:
+          description: Human-readable validation errors
+          schema:
+            $ref: '#/definitions/ValidationErrors'
+        default:
+          description: unexpected errors
+      security:
+        - oauth2:
+            - store.users
+  /loyalt_program/login/:
+    get:
+      tags:
+        - Loyalty Program
+      summary: Login a given user
+      description: Login a given user into the Loyalty Program
+      responses:
+        200:
+          description: JWT string
+          schema:
+            properties:
+              jwt:
+                description: JWT string representation
+                type: string
+                example: 1q2w3e4r.5t6y7u8i9o0p
+        default:
+          description: Unexpected Errors
+      security:
+        - oauth2:
+            - read.users
+  /multitree:
+    get:
+        tags:
+          - Multitree
+          - Categories
+        summary: Returns the Categories tree
+        description: Will return the complete hierarchy of categories from ecommerce
+        responses:
+          200:
+            description: Successfull response
+            schema:
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: The Object ID of the Category
+                        example: "94301c94561859d0b3ea8a69"
+                      name:
+                        type: string
+                        description: The Name of the Category
+                        example: "Banheiros"
+                      children:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: The Object ID of the Category
+                              example: "94301c94561859d0b3ea8a69"
+                            name:
+                              type: string
+                              description: The Name of the Category
+                              example: "Vasos para Banheiros"
+                            children:
+                              type: object
+          default:
+            description: Unexpected Errors
+        security:
+          - oauth2:
+              - read.multitree
+
+definitions:
+  ProductEanConflict:
+    properties:
+      errors:
+        description: List of human-readable validation error messages
+        properties:
+          field:
+            type: array
+            items:
+              type: string
+              example:
+                - The ean has already been taken.
+        type: object
+      link:
+        description: Link to conflicted resource
+        properties:
+          href:
+            description: Complete URL that uniquely defines the resource
+            type: string
+            example: 'https://www.leroymerlin.com.br/api/v2/products/ean/12345676543218'
+          method:
+            description: URL method
+            type: string
+            example: GET
+        type: object
+    type: object
+  Cart:
+    properties:
+      id:
+        description: Cart id
+        type: string
+        example: 58a20df40374210ef97e7701
+      items:
+        description: All cart items
+        type: array
+        items:
+          $ref: '#/definitions/Item'
+      totalPrice:
+        description: Total cart of items price
+        type: number
+        example: 221.1
+      createdAt:
+        description: Creation date of content in RFC3339 format
+        type: string
+        format: date-time
+        example: '2017-08-27T04:04:36-03:00'
+    type: object
+  ImageContent:
+    properties:
+      id:
+        description: Image id
+        type: string
+        example: 58a20df40374210ef97e7701
+      title:
+        description: Content Title
+        type: string
+        example: Single men's house
+      description:
+        description: Content description
+        type: string
+        example: You can check out our environments and get inspired to set up the design of your home.
+      slug:
+        description: Transform the given content.
+        type: string
+        example: escritorio-pequeno-com-parede-de-lousa
+      tags:
+        description: Content tags
+        type: array
+        items:
+          type: string
+      url:
+        description: Content URL (relative)
+        type: string
+        example: dicas/escritorio-pequeno-com-parede-de-lousa
+      fullUrl:
+        description: Content URL (including domain)
+        type: string
+        example: 'https://website/dicas/escritorio-pequeno-com-parede-de-lousa'
+      pictures:
+        description: Content pictures
+        type: array
+        items:
+          $ref: '#/definitions/ContentPicture'
+      products:
+        description: All content products
+        type: array
+        items:
+          $ref: '#/definitions/ContentProduct'
+      createdAt:
+        description: Creation date of content in RFC3339 format
+        type: string
+        format: date-time
+        example: '2017-08-27T04:04:36-03:00'
+      publishDate:
+        description: Publication date of the content in RFC3339 format
+        type: string
+        format: date-time
+        example: '2017-08-30T15:30:22-03:00'
+    type: object
+  ContentPicture:
+    properties:
+      type:
+        description: Picture type
+        type: string
+        example: image
+      title:
+        description: Picture title
+        type: string
+        example: White house
+      url:
+        description: Picture URL
+        type: string
+        example: 'https://cdn.leroymerlin.com.br/products/white_house.jpg'
+    type: object
+  ContentProduct:
+    properties:
+      id:
+        description: Product lm
+        type: integer
+        example: 88998899
+      url:
+        description: Product full url
+        type: string
+        example: 'https://www.leroymerlin.com.br/chave-torx-t10-dexter_89680255'
+      name:
+        description: Product name
+        type: string
+        example: Cordless drill 20V
+      pictures:
+        description: Product pictures
+        type: array
+        items:
+          $ref: '#/definitions/ContentPicture'
+    type: object
+  Item:
+    required:
+      - id
+      - name
+      - ean
+      - image
+      - quantity
+      - unit
+      - allocation
+    properties:
+      id:
+        description: Product ID
+        type: integer
+        example: 88912779
+      name:
+        description: Full product name
+        type: string
+        example: Lixadeira de cinta DeWalt
+      ean:
+        description: EAN 13 product barcode
+        type: string
+        example: '7892030912311'
+      image:
+        description: An URL to a product's image
+        type: string
+        example: 'https://s3-sa-east-1.amazonaws.com/leroy-production//uploads/img/products/lixadeira_e_politriz_dewalt_dwp849x_br_1250w_110v_88353034_0001_600x600.jpg'
+      quantity:
+        description: Amount of bought item
+        type: integer
+        example: 12
+      unit:
+        description: Product selling unit
+        type: string
+        example: un
+      unitPrice:
+        description: Product selling price
+        type: number
+        example: 221.1
+    type: object
+  ServicePrice:
+    properties:
+      serviceId:
+        description: >
+          The service ID:
+            * `boitata` - Site
+            * `va` - Assisted Sale
+            * `pricefy` - Product Price Tags
+            * `sap` - Core of the company
+            * `linx` - Point of sale
+            * `mdm` - Integrator
+        type: string
+        example: boitata
+        enum:
+          - boitata
+          - va
+          - pricefy
+          - sap
+          - linx
+      status:
+        type: integer
+        example: 200
+        enum:
+          - 200
+          - 400
+          - 401
+          - 404
+          - 500
+      data:
+        description: Product price data
+        type: object
+        $ref: '#/definitions/ProductPrice'
+  ServicePriceUpdate:
+    properties:
+      serviceId:
+        description: >
+          The service ID:
+            * `boitata` - Site
+            * `va` - Assisted Sale
+            * `pricefy` - Product Price Tags
+            * `sap` - Core of the company
+            * `linx` - Point of sale
+            * `mdm` - Integrator
+        type: string
+        example: boitata
+        enum:
+          - boitata
+          - va
+          - pricefy
+          - sap
+          - linx
+          - mdm
+      status:
+        type: integer
+        example: 200
+        enum:
+          - 200
+          - 400
+          - 401
+          - 404
+          - 500
+  ServicePriceWithErrors:
+    properties:
+      serviceId:
+        type: string
+        example: linx
+      status:
+        type: integer
+        example: 404
+      data:
+        $ref: '#/definitions/NotFoundError'
+  ProductPrice:
+    properties:
+      id:
+        description: The product ID
+        type: string
+        example: '88998899'
+      ean:
+        description: Product barcode in EAN-13 standard
+        type: string
+        example: '7896525091042'
+      unit:
+        description: Shows the packaging unit in which the product is going to be sold.
+        type: string
+        enum:
+          - un
+          - m²
+          - m³
+          - metro
+          - rolo
+      storeId:
+        description: The store ID
+        type: string
+        example: '0045'
+      prices:
+        description: Product prices
+        type: array
+        items:
+          $ref: '#/definitions/AuditPrice'
+  AuditPrice:
+    properties:
+      type:
+        description: Price type
+        type: string
+        example: "special"
+        enum:
+          - recommended
+          - special
+      specialReason:
+        description: Reason of special price
+        type: string
+        example: "31"
+      date:
+        description: Date range in which the price in the request is going to be valid
+        properties:
+          start:
+            description: Start Date Time
+            type: string
+            example: '2009-12-31T04:20:36'
+          end:
+            description: End Date Time
+            type: string
+            example: '2033-12-31T16:20:36'
+        type: object
+      value:
+        description: Product Price Value
+        type: number
+        example: 162.98
+      netPrice:
+        description: Product net price
+        type: number
+        example: 192.98
+    type: object
+  Price:
+    properties:
+      lm:
+        description: The product LM
+        type: integer
+        example: 88020002
+      region:
+        description: The price's region
+        type: string
+        enum:
+            - alagoas
+            - baixada_santista
+            - belo_horizonte
+            - brasilia
+            - campinas
+            - ceara
+            - curitiba
+            - espirito_santo
+            - goiania
+            - grande_porto_alegre
+            - grande_sao_paulo
+            - londrina
+            - mato_grosso_do_sul
+            - outros
+            - rib_preto
+            - rio_de_janeiro
+            - rio_grande_do_norte
+            - santa_catarina
+            - sao_jose_do_rio_preto
+            - sorocaba
+            - uberlandia
+            - vale_do_paraiba
+
+      fromPrice:
+        description: The original price
+        type: number
+        example: 99.9
+      toPrice:
+        description: The current price
+        type: number
+        example: 79.9
+      isPromotional:
+        description: If the current price is promotional
+        type: boolean
+        example: 'true'
+      isAvailableOnEcommerce:
+        description: If the current product is available on ecommerce
+        type: boolean
+        example: 'true'
+    type: object
+  NewProduct:
+    properties:
+      id:
+        description: Product ID
+        type: integer
+        example: 1537902793
+      marketplaceId:
+        description: Marketplace ID
+        type: integer
+        example: 1537902793
+      longTitle:
+        description: Long title
+        type: string
+        maxLength: 120
+        example: Furadeira de Impacto 1/2' 650W DWD502 BR com kit brocas 127V (110V) Dewalt
+      shortTitle:
+        description: Short title
+        type: string
+        maxLength: 62
+        example: Furadeira Impacto 1/2' 650W com kit brocas 127V (110V) Dewalt
+      description:
+        description: Advertising text description
+        type: string
+        maxLength: 280
+        example: 'A nova furadeira DWD502BR é robusta. Tem potência de 650W e função para perfurar, com e sem impacto'
+      fullDescription:
+        description: Same as the product description, but without character limit. Used mainly for SEO.
+        type: string
+        example: 'Compacta e leve, essa furadeira tem maior potência de pressão axial, possui punho emborrachado com design ergonômico proporcionando maior controle e conforto. Indicada para uso em concreto, alvenaria e outros materiais duros.'
+      productBank:
+        description: Product Bank Id
+        type: string
+        example: '7896525091042'
+      attributes:
+        description: Product Attributes - A set of attributes with detailed information about the product
+        type: array
+        items:
+          properties:
+            name:
+              description: Product attribute name
+              type: string
+              example: Potencia
+            value:
+              description: Product attribute value
+              type: string
+              example: 660 w
+      sellingPackaging:
+        description: 'Product packaging - Is a set of Dimensions and weight, it can be used for logistic calculations.'
+        properties:
+          width:
+            description: Product width
+            type: number
+            example: 22.1
+          height:
+            description: Product height
+            type: number
+            example: 19.2
+          length:
+            description: Product length
+            type: number
+            example: 8
+          weight:
+            description: Product weight
+            type: number
+            example: 4.2
+        type: object
+      ean:
+        description: Barcode in EAN-13 standard
+        type: string
+        example: '7896525091042'
+      conjugatedEans:
+        description: Barcode of the products that compose the conjugated product in EAN-13 standard.
+        type: array
+        items:
+          type: string
+        example: ['7896525091042', '7896525091053']
+    type: object
+  Product:
+    properties:
+      id:
+        description: Product ID
+        type: integer
+        example: 89371555
+      lm:
+        description: Product LM
+        type: integer
+        example: 89371555
+      marketplaceId:
+        description: Marketplace ID
+        type: integer
+        example: 1537902793
+      createdByExternalSources:
+        description: Flag that indicates when the product was created by external sources. Like through an API.
+        type: boolean
+        example: true
+      longTitle:
+        description: Long title
+        type: string
+        maxLength: 120
+        example: Furadeira de Impacto 1/2' 650W DWD502 BR com kit brocas 127V (110V) Dewalt
+      shortTitle:
+        description: Short title
+        type: string
+        maxLength: 62
+        example: Furadeira Impacto 1/2' 650W com kit brocas 127V (110V) Dewalt
+      description:
+        description: Advertising text description
+        type: string
+        example: "A nova furadeira DWD502BR é robusta. Tem potência de 650W e função para perfurar, com e sem impacto: alvenaria com alcance de 13 mm; madeira com 25 mm; e metal até 10 mm.\_O equipamento possui: **uma empunhadura de plástico lateral** com limitador de profundidade e acompanha chave de mandril e porta chave no cabo"
+      fullDescription:
+        description: Same as the product description, but without character limit. Used mainly for SEO.
+        type: string
+        example: 'Compacta e leve, essa furadeira tem maior potência de pressão axial, possui punho emborrachado com design ergonômico proporcionando maior controle e conforto. Indicada para uso em concreto, alvenaria e outros materiais duros.'
+      url:
+        description: Product URL
+        type: string
+        example: 'https://www.leroymerlin.com.br/furadeira-de-impacto-1-2-650w-dwd502-br-com-kit-brocas-127v--110v--dewalt_8850791'
+      productBank:
+        description: Product Bank Id
+        type: string
+        example: '7896525091042'
+      attributes:
+        description: Product Attributes - A set of attributes with detailed information about the product
+        type: array
+        items:
+          properties:
+            name:
+              description: Product attribute name
+              type: string
+              example: Potencia
+            value:
+              description: Product attribute value
+              type: string
+              example: 660 w
+      pictures:
+        description: An array of pictures
+        type: array
+        items:
+          properties:
+            title:
+              description: Picture title
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            alt:
+              description: Picture alt
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            url:
+              description: Picture URl for the original size
+              type: string
+              example: 'https://cdn.leroymerlin.com.br/products/furadeira_de_impacto_de_1_2_dwd502_br_650w_127v__110v__com_kit_brocas_dewalt_89371555_e613_original.jpg'
+      videos:
+        description: An array of videos
+        type: array
+        items:
+          properties:
+            title:
+              description: Video title
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            alt:
+              description: Video alt
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            youtubeId:
+              description: Youtube id for its video
+              type: string
+              example: iSe64Xndip8
+            youtubeUrl:
+              description: YouTube video URL
+              type: string
+              example: 'https://www.youtube.com/watch?v=iSe64Xndip8'
+            thumbnailUrl:
+              description: Video thumbnail URL
+              type: string
+              example: 'https://cdn.leroymerlin.com.br/products/furadeira_de_impacto_de_1_2_dwd502_br_650w_127v__110v__com_kit_brocas_dewalt_89371555_e613_original.jpg'
+      3DPhoto:
+        description: Product 3D Photo - a third-party service with 3D overview of the product
+        type: string
+        example: 'https://sketchfab.com/models/1f4fc4564063f5720fb00eb16d5e'
+      sellingPackaging:
+        description: 'Product packaging - Is a set of Dimensions and weight, it can be used for logistic calculations.'
+        properties:
+          width:
+            description: Product width
+            type: number
+            example: 22.1
+          height:
+            description: Product height
+            type: number
+            example: 19.2
+          length:
+            description: Product length
+            type: number
+            example: 8
+          weight:
+            description: Product weight
+            type: number
+            example: 4.2
+        type: object
+      sellingUnit:
+        description: Product selling measure type. Shows how the product is being sold.
+        type: string
+        enum:
+          - un
+          - m²
+          - m³
+          - metro
+          - rolo
+        example: un
+      isBundled:
+        description: Flag that defines if the product is a bundle of other products.
+        type: boolean
+        example: true
+      bundleLms:
+        description: Array of LMs for bundle
+        type: array
+        items:
+          description: Product Bundle LM
+          type: integer
+          example: 89371578
+      packaging:
+        description: 'Product packaging - It''s the quantity of a product that is sold, according to the unit measure. E.g. a box of ceramics contains 2.4 m2, a hammer has only 1 unit per item.'
+        type: number
+        example: 2.4
+      gama:
+        description: 'Is the set of references (articles, products) that make up a product line (family), like "trenas", "assentos sanitários", "rejuntes", etc. Those references are classified into ranges and displayed as letters, which serve as guidance to organize those products.'
+        type: string
+        enum:
+          - a
+          - b
+          - c
+          - l
+          - p
+          - s
+        example: a
+      ean:
+        description: Barcode in EAN-13 standard
+        type: string
+        example: '7896525091042'
+      conjugatedEans:
+        description: Barcode of the products that compose the conjugated product in EAN-13 standard.
+        type: array
+        items:
+          type: string
+        example: ['7896525091042', '7896525091053']
+      isAVS:
+        description: Indicates if the product is in AVS
+        type: boolean
+        example: true
+      avsEndDate:
+        description: Indicates AVS end date of the product
+        type: string
+        example: '2009-12-31T04:04:36-03:00'
+      handledByBatch:
+        description: Indicates if the product is handled by batches
+        type: boolean
+        example: true
+      hierarchyNode:
+        description: Product Hierarchy Nodes -  A structure that defines in which section a specific product belongs to. This allows the identification of similar products within the same hierarchy
+        properties:
+          section:
+            description: The section for the product
+            type: string
+            example: 04 - Ferramentas
+          subSection:
+            description: The product sub section
+            type: string
+            example: 0406 - Furadeiras
+          type:
+            description: The product type
+            type: string
+            example: 25 - Furadeiras Eletricas
+          subType:
+            description: The product sub type
+            type: string
+            example: 2590 - Furadeiras Eletricas 110v
+        type: object
+      createdAt:
+        description: Product registration date in RFC3339 date time format
+        type: string
+        example: '2018-08-07T18:16:45-03:00'
+      updatedAt:
+        description: Product last updated date in RFC3339 date time format
+        type: string
+        example: '2018-08-27T04:04:36-03:00'
+    type: object
+  NewProductRequest:
+    required:
+      - productBank
+      - shortTitle
+      - longTitle
+      - description
+      - attributes
+      - sellingPackaging
+    properties:
+      longTitle:
+        description: Long title
+        type: string
+        maxLength: 120
+        example: Furadeira de Impacto 1/2' 650W DWD502 BR com kit brocas 127V (110V) Dewalt
+      shortTitle:
+        description: Short title
+        type: string
+        maxLength: 62
+        example: Furadeira Impacto 1/2' 650W com kit brocas 127V (110V) Dewalt
+      description:
+        description: Advertising text description
+        type: string
+        maxLength: 280
+        example: 'A nova furadeira DWD502BR é robusta. Tem potência de 650W e função para perfurar, com e sem impacto'
+      fullDescription:
+        description: Same as the product description, but without character limit. Used mainly for SEO.
+        type: string
+        example: 'Compacta e leve, essa furadeira tem maior potência de pressão axial, possui punho emborrachado com design ergonômico proporcionando maior controle e conforto. Indicada para uso em concreto, alvenaria e outros materiais duros.'
+      productBank:
+        description: Product Bank Id
+        type: string
+        example: '7896525091042'
+      attributes:
+        description: Product Attributes - A set of attributes with detailed information about the product
+        type: array
+        items:
+          properties:
+            name:
+              description: Product attribute name
+              type: string
+              example: Potencia
+            value:
+              description: Product attribute value
+              type: string
+              example: 660 w
+      pictures:
+        description: An array of pictures. The pictures will be fetched and processed asynchronously.
+        type: array
+        items:
+          properties:
+            title:
+              description: Picture title
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            alt:
+              description: Picture alt
+              type: string
+              example: Furadeira de Impacto com kit brocas Dewalt
+            url:
+              description: Picture URl for the original size
+              type: string
+              example: 'https://cdn.leroymerlin.com.br/products/furadeira_de_impacto_de_1_2_dwd502_br_650w_127v__110v__com_kit_brocas_dewalt_89371555_e613_original.jpg'
+      sellingPackaging:
+        description: 'Product packaging - Is a set of Dimensions and weight, it can be used for logistic calculations.'
+        properties:
+          width:
+            description: Product width
+            type: number
+            example: 22.1
+          height:
+            description: Product height
+            type: number
+            example: 19.2
+          length:
+            description: Product length
+            type: number
+            example: 8
+          weight:
+            description: Product weight
+            type: number
+            example: 4.2
+        type: object
+      ean:
+        description: Barcode in EAN-13 standard. Required if product is not conjugated.
+        type: string
+        example: '7896525091042'
+      conjugatedEans:
+        description: Barcode of the products that will compose the conjugated product in EAN-13 standard.
+        type: array
+        items:
+          type: string
+        example: ['7896525091042', '7896525091053']
+    type: object
+  ProductBank:
+    properties:
+      id:
+        description: Product Bank id
+        type: string
+        example: 58a20df40374210ef97e7701
+      name:
+        description: A user friendly name of the product bank
+        type: string
+        example: Furadeiras
+      description:
+        description: A description that explains what is the given product bank
+        type: string
+        example: São acessórios extras compostos de multijatos.
+      productShortNamePattern:
+        description: A recommended pattern for product's short name
+        type: string
+        example: Produto + Tensão Elétrica + Marca
+      productLongNamePattern:
+        description: A recommended pattern that tells how a product's long name should be
+        type: string
+        example: Produto + Potência + Tensão Elétrica + Marca
+      recommendedPicturesQuantity:
+        description: How many pictures are recommended for a product of this product bank to have
+        type: integer
+        example: 5
+      picture:
+        description: A picture that represents a product belonging to this product bank
+        type: string
+        example: 'https://cdn.leroymerlin.com.br/product-banks/furadeiras_600x600.jpg'
+      isDataSheetConfigured:
+        description: Whether Data Sheet is properly configured for product bank
+        type: boolean
+        example: true
+      createdAt:
+        description: Product Bank registration date in RFC3339 date time format
+        type: string
+        example: '2018-08-07T18:16:45-03:00'
+      updatedAt:
+        description: Product Bank last updated date in RFC3339 date time format
+        type: string
+        example: '2018-08-27T04:04:36-03:00'
+      attributes:
+        description: 'Attributes that characterize each product. They can have different types, each one has its own fields (see examples)'
+        type: array
+        items:
+          properties:
+            id:
+              description: Characteristic ID
+              type: string
+              example: 58a20df40374210ef97e7701
+            groupName:
+              description: 'Is used as an additional layer of context to distinguish some attributes from others, like "Altura" and "Altura da Embalagem", each of these ones have its own groupName'
+              type: string
+              example: Acompanha Embalagem
+            fieldName:
+              description: Sanitized name of attribute
+              type: string
+              example: capacidade_de_peso
+            name:
+              description: User friendly attribute name
+              type: string
+              example: Capacidade de Peso
+            type:
+              type: string
+              enum:
+                - int
+                - float
+                - regex
+                - string
+                - option
+              example: int
+            description:
+              description: 'A description of the attribute, if needed'
+              type: string
+              example: Indica o peso suportado pelo produto
+            prefix:
+              description: (optional) character(s) that will prefix value
+              type: string
+              example: at least
+            suffix:
+              description: (optional) character(s) that will suffix value
+              type: string
+              example: km
+            regexExpression:
+              description: 'PCRE regex pattern without delimiters, using case-sensitive matching'
+              type: string
+              example: '^\\d+,\\d{2}(\\sa\\s\\d+,\\d{2})?$'
+            regexDescription:
+              description: User friendly explanation of regexExpression
+              type: string
+              example: 'Formatos aceitos: Decimal a Decimal; Decimal'
+            interval:
+              description: 'Interval for numeric fields (int, float)'
+              type: string
+              example: 10
+            required:
+              description: Whether filling the attribute is required or not
+              type: boolean
+              example: true
+            dataSheet:
+              description: Whether the attribute compose the data sheet
+              type: boolean
+              example: true
+            hidden:
+              description: Whether the attribute is hidden to Customers
+              type: boolean
+              example: true
+            values:
+              description: Array of possible values of type 'option'
+              type: array
+              items:
+                type: string
+                example:
+                  - Sim
+                  - Não
+    type: object
+  ProductBankList:
+    properties:
+      id:
+        description: Product Bank id
+        type: string
+        example: 58a20df40374210ef97e7701
+      name:
+        description: A user friendly name of the product bank
+        type: string
+        example: Furadeiras
+    type: object
+  User:
+    properties:
+      id:
+        description: User object id
+        type: string
+        example: 58a20df40374210ef97e7701
+      name:
+        description: User name
+        type: string
+        example: John Doe
+      email:
+        description: User email
+        type: string
+        example: john.doe@example.com
+      cpf:
+        description: User CPF number
+        type: string
+        example: '78274750780'
+      birthDate:
+        description: User birth date in ISO8601 date format
+        type: string
+        example: '1989-05-20'
+      createdAt:
+        description: User registration date in RFC3339 date time format
+        type: string
+        example: '2017-08-07T18:16:45-03:00'
+      updatedAt:
+        description: User last updated date in RFC3339 date time format
+        type: string
+        example: '2017-08-27T04:04:36-03:00'
+      occupation:
+        description: User occupation
+        type: string
+        enum:
+            - Engineer
+            - Architect
+            - Decorator
+            - Mason
+            - Joiner
+            - Electrician
+            - Ceramist
+            - Plumber
+            - Gardener
+            - Painter
+            - Blacksmith
+            - Landscaper
+            - Constructor
+            - Other
+
+        example: Engineer
+      gender:
+        description: User gender
+        type: string
+        enum:
+          - male
+          - female
+          - unknown
+      picture:
+        description: User profile picture
+        type: string
+        example: 'https://cdn.leroymerlin.com.br/images/avatar.png'
+      region:
+        description: The region where the user belongs to
+        type: string
+        enum:
+          - Alagoas
+          - 'Baixada Santista'
+          - Brasília
+          - Campinas
+          - Ceará
+          - 'Demais Regiões'
+          - 'Espírito Santo'
+          - 'Estado de Minas Gerais'
+          - 'Estado do Paraná'
+          - Goiânia
+          - Londrina
+          - 'Mato Grosso do Sul'
+          - 'Porto Alegre e Região'
+          - 'Ribeirão Preto'
+          - 'Rio Grande do Norte'
+          - 'Rio de Janeiro'
+          - 'Santa Catarina'
+          - Sorocaba
+          - 'São José do Rio Preto'
+          - 'São Paulo e Região'
+          - Uberlândia
+          - 'Vale do Paraíba'
+
+      favoriteStore:
+        description: User favorite store
+        type: string
+        example: interlagos
+      phones:
+        description: User phone numbers
+        type: array
+        items:
+          $ref: '#/definitions/UserPhone'
+      addresses:
+        description: User addresses
+        type: array
+        items:
+          $ref: '#/definitions/UserAddress'
+      notifications:
+        $ref: '#/definitions/UserNotifications'
+      createdSource:
+        description: The source where the user was created
+        type: string
+        enum:
+            - api
+            - site
+            - admin
+            - oAuth
+            - social
+
+        example: api
+      createdSourceClient:
+        description: The client if the user was created by oauth clients.
+        type: string
+        example: Leroy Com Você
+      preferences:
+        description: User preferences
+        type: object
+        properties:
+          loyaltyProgram:
+            description: If the user has signed up to the Loyalty Program
+            type: boolean
+            example: true
+      interests:
+        description: User interests
+        type: object
+        properties:
+          hasChildIndicator:
+            description: Indicates if the user has children
+            type: boolean
+            example: false
+          homeDecorKnowledgeLevel:
+            description: Indicates each level of knowledge in decoration
+            type: string
+            enum: [high, low, none]
+            example: low
+          DIYRelationType:
+            description: Level of relation with DIY
+            type: string
+            enum: [high, medium, low]
+            example: medium
+          interestAreaName:
+            description: Indicates which areas of interest the user has
+            type: array
+            items:
+              type: string
+              enum:
+              - bathroom
+              - kitchen
+              - floor
+              - organization
+              - garden
+              - decoration
+              - carpet
+              - lighting
+              - ironmongery
+              - construction
+              - electrical
+              - ventilation
+              - tools
+              - hydraulic
+              - wood
+              - door
+              - paints
+              - security
+              - maintenance
+
+            example: [maintenance, security]
+    type: object
+  UserPhone:
+    properties:
+      type:
+        description: Phone type
+        type: string
+        enum:
+          - cellphone
+          - landline
+
+      number:
+        description: Formatted phone number
+        type: string
+        example: (11) 96584-0152
+      default:
+        description: Whether the number is the preferred contact phone
+        type: boolean
+        example: true
+    type: object
+  UserAddress:
+    properties:
+      nickname:
+        description: An alias the user gave to identify the address
+        type: string
+        example: Casa
+      cep:
+        description: CEP number of the address
+        type: string
+        maximum: 8
+        minimum: 8
+        example: '04642000'
+      street:
+        description: Street name of the address
+        type: string
+        maximum: 50
+        example: Av. Interlagos
+      number:
+        description: Number of the address
+        type: string
+        example: '256'
+      complement:
+        description: Complementary info of the address
+        type: string
+        maximum: 20
+        example: AP10
+      reference:
+        description: A nearby place
+        type: string
+        example: Próximo ao ponto de ônibus
+      district:
+        description: District name of the address
+        type: string
+        maximum: 50
+        example: Campo Grande
+      city:
+        description: City where the address is located
+        type: string
+        maximum: 60
+        example: São Paulo
+      state:
+        description: State where the address is located
+        type: string
+        enum: [AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC, SP, SE, TO]
+        example: SP
+      hasPool:
+        description: Whether the address has a swimming poll
+        type: boolean
+        example: true
+      hasGarden:
+        description: Whether the address has a garden
+        type: boolean
+        example: true
+      hasOwnership:
+        description: Whether the user owns this address
+        type: boolean
+        example: false
+      bathroomCount:
+        description: Number of bathroom in this address
+        type: number
+        example: 2
+      type:
+        description: Type of the address
+        type: string
+        example: residential
+      default:
+        description: Whether the address is the user's default
+        type: boolean
+        example: true
+    type: object
+  UserNotifications:
+    description: User notification preferences
+    properties:
+      emailNotifications:
+        description: Whether the user wants to receive email messages about his/hers purchases
+        type: boolean
+        example: true
+      emailOffers:
+        description: Whether the user wants to receive email messages about tips and deals
+        type: boolean
+        example: false
+      smsServices:
+        description: Whether the user wants to receive SMS messages about purchases tracking
+        type: boolean
+        example: true
+      smsNotifications:
+        description: Whether the user wants to receive SMS messages about deals
+        type: boolean
+        example: false
+      postalNotifications:
+        description: Whether the user wants to receive posts
+        type: boolean
+        example: true
+      phoneNotifications:
+        description: Whether the user wants to receive phone calls
+        type: boolean
+        example: false
+    type: object
+  ValidationErrors:
+    required:
+      - errors
+    properties:
+      errors:
+        description: List of human-readable validation error messages
+        properties:
+          field:
+            description: Return a new JSON response from the application with validation errors.
+            type: array
+            items:
+              type: string
+              example:
+                - The name field is required.
+                - The age must be an integer.
+        type: object
+    type: object
+  SuccessRequest:
+    description: Human-readable validation
+    properties:
+      message:
+        type: string
+        description: Insight about operation.
+        example: Success.
+  FailureRequest:
+    description: Human-readable validation
+    properties:
+      message:
+        type: string
+        description: Insight about operation.
+        example: Failure.
+  InternalServerError:
+    description: Human-readable validation
+    properties:
+      message:
+        type: string
+        description: Insight about operation.
+        example: Internal Server Error.
+  NotFoundError:
+    required:
+      - errors
+    properties:
+      errors:
+        description: List of human-readable error messages
+        properties:
+          storeId:
+            description: Return a new JSON response from the application with validation errors.
+            type: string
+            example: The store id not found
+        type: object
+    type: object
+  Pagination:
+    properties:
+      page:
+        description: Current page number
+        type: integer
+        example: 2
+      perPage:
+        description: Maximum amount of records that are shown on each page
+        type: integer
+        example: 10
+      pageCount:
+        description: Estimated total amount of pages based on perPage value
+        type: integer
+        example: 4
+      totalCount:
+        description: Estimated total amount of records for given resource
+        type: integer
+        example: 34
+    type: object
+  Limit:
+    properties:
+      _limit:
+        description: Maximum number of results
+        type: integer
+        example: 10
+      _offset:
+        description: The offset of the first result
+        type: integer
+        example: 2
+      total:
+        description: Estimated total amount of records for given resource
+        type: integer
+        example: 34
+    type: object
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://www.leroymerlin.com.br/oauth/authorize
+    tokenUrl: https://www.leroymerlin.com.br/oauth/token
+    scopes:
+      read.profile: 'Read profile information'
+      read.contents: 'Fetch contents'
+      read.users: 'Read users information'
+      read.carts: 'Read users shopping carts'
+      read.products: 'Read products information'
+      write.products: 'Store or update products information'
+      write.marketplace.products: 'Store or update marketplace products information'
+      read.productBanks: 'Read product banks information'
+      read.prices: 'Read products'' prices information'
+      write.prices: 'Write products'' prices information'
+      store.users: 'Store users information'
+      read.multitree: 'Read categories hierarchy for ecommerce'
+      boitata_admin: 'Backoffice Boitata'
+
+tags:
+  - name: API
+    description: Meta information about the API
+  - name: Content
+    description: Operations regarding Contents
+  - name: Products
+    description: Operations regarding Products
+  - name: Product Banks
+    description: Discover Product Banks and their structures
+  - name: Users
+    description: Operations regarding Users
+  - name: Loyalty Program
+    description: Operations regarding the Loyalty Program
